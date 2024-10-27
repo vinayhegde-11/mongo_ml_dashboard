@@ -56,67 +56,68 @@ st.write("")
 # Create a section for displaying data
 data_placeholder = st.empty()
 
-# Keep the app refreshing every 10 seconds
-while True:
-    # Clear previous entries and avoid duplicate/shadow entries
-    with data_placeholder.container():
-        # Fetch data from MongoDB
-        data = fetch_data()
+# Clear previous entries and avoid duplicate/shadow entries
+with data_placeholder.container():
+    # Fetch data from MongoDB
+    data = fetch_data()
 
-        # Filter data based on user selections
-        filtered_data = filter_data(data, selected_class, selected_date)
-        
-        if filtered_data:
-            # Display header row for the data table
-            header_col1, header_col2, header_col3 = st.columns([2, 1, 1])
-            header_col1.write("**Image**")
-            header_col2.write("**Class**")
-            header_col3.write("**Date**")
-
-            # Display data rows
-            for entry in filtered_data:
-                col1, col2, col3 = st.columns([2, 1, 1])
-
-                # Image display (handle missing or incorrect image path)
-                img_path = entry.get("image_path")
-                if img_path and os.path.exists(img_path):  # Ensure the image file exists
-                    try:
-                        # Load image using the image path
-                        img = Image.open(img_path)
-
-                        # Create a copy of the original image and resize it to 60x60 pixels for inline display
-                        img_64 = img.copy().resize((60, 60))
-
-                        # Convert the resized image to bytes for inline display
-                        img_bytes = io.BytesIO()
-                        img_64.save(img_bytes, format='PNG')
-                        img_base64 = base64.b64encode(img_bytes.getvalue()).decode()
-
-                        # Use file:/// protocol to open the original image
-                        file_path = f"file://{img_path}"  # Adjusted to use file:/// protocol
-                        col1.markdown(f'<a href="{file_path}" target="_blank"><img src="data:image/png;base64,{img_base64}" style="width:60px;height:60px;"></a>', unsafe_allow_html=True)
-
-                    except Exception as e:
-                        continue  # Skip this entry if the image can't be loaded
-                else:
-                    col1.write("No Image")  # Placeholder if image_path is not available
-                
-                # Class display
-                col2.write(entry['class_name'])  # Directly show the class name
-                
-                # Split the time into date and time
-                date_time = entry['time'].split(" ")
-                date_part = date_time[0] if len(date_time) > 0 else ""
-                time_part = date_time[1] if len(date_time) > 1 else ""
-
-                # Display date and time in separate lines
-                col3.write(date_part)  # Display date
-                col3.write(time_part)  # Display time
-
-                # Draw a horizontal line to separate entries
-                st.markdown("---")
-        else:
-            st.write("No data found for the selected filters.")
+    # Filter data based on user selections
+    filtered_data = filter_data(data, selected_class, selected_date)
     
-    # Auto-refresh every 10 seconds
+    if filtered_data:
+        # Display header row for the data table
+        header_col1, header_col2, header_col3, header_col4 = st.columns([2, 1, 1, 1])
+        header_col1.write("**Image**")
+        header_col2.write("**Class**")
+        header_col3.write("**Count**")  # Add count header
+        header_col4.write("**Date**")
+
+        # Display data rows
+        for entry in filtered_data:
+            col1, col2, col3, col4 = st.columns([2, 1, 1, 1])  # Added a column for count
+
+            # Image display (handle missing or incorrect image path)
+            img_path = entry.get("image_path")
+            if img_path and os.path.exists(img_path):  # Ensure the image file exists
+                try:
+                    # Load image using the image path
+                    img = Image.open(img_path)
+
+                    # Create a copy of the original image and resize it to 60x60 pixels for inline display
+                    img_64 = img.copy().resize((60, 60))
+
+                    # Convert the resized image to bytes for inline display
+                    img_bytes = io.BytesIO()
+                    img_64.save(img_bytes, format='PNG')
+                    img_base64 = base64.b64encode(img_bytes.getvalue()).decode()
+
+                    # Use file:/// protocol to open the original image
+                    file_path = f"file://{img_path}"  # Adjusted to use file:/// protocol
+                    col1.markdown(f'<a href="{file_path}" target="_blank"><img src="data:image/png;base64,{img_base64}" style="width:60px;height:60px;"></a>', unsafe_allow_html=True)
+
+                except Exception as e:
+                    continue  # Skip this entry if the image can't be loaded
+            else:
+                col1.write("No Image")  # Placeholder if image_path is not available
+            
+            # Class display
+            col2.write(entry['class_name'])  # Directly show the class name
+
+            # Class count display
+            col3.write(entry.get('count', 'N/A'))  # Display class count from MongoDB entry
+            
+            # Split the time into date and time
+            date_time = entry['time'].split(" ")
+            date_part = date_time[0] if len(date_time) > 0 else ""
+            time_part = date_time[1] if len(date_time) > 1 else ""
+
+            # Display date and time in separate lines
+            col4.write(date_part)  # Display date
+            col4.write(time_part)  # Display time
+
+            # Draw a horizontal line to separate entries
+            st.markdown("---")
+    else:
+        st.write("No data found for the selected filters.")
+    
     time.sleep(10)
