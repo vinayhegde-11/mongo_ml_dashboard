@@ -2,11 +2,13 @@ import torch
 import cv2
 from models.experimental import attempt_load
 from utils.datasets import  LoadImages
-from utils.general import check_img_size, non_max_suppression,scale_coords 
+from utils.general import check_img_size, non_max_suppression,scale_coords
+from config_loader import load_config
+config = load_config('config.yml')
 
 _model_instance = None
 
-def get_model_instance(model_path="/home/hegde/project/pipeline_y7/yolov7.pt", device='cpu'):
+def get_model_instance(model_path=config['model_path'], device='cpu'):
     global _model_instance
     if _model_instance is None:
         _model_instance = attempt_load(model_path, map_location=device)
