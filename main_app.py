@@ -1,59 +1,11 @@
-# import streamlit as st
-# import pika
-# from read_and_save import read_and_save_input_image
-
-# # Function to push image path to RabbitMQ
-# def push_to_rabbitmq(image_path):
-#     try:
-#         rabbitmq_host = 'localhost'  # Change if RabbitMQ is running on a different host
-#         queue_name = 'image_path'    # The name of the queue
-
-#         # Connect to RabbitMQ server
-#         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
-#         channel = connection.channel()
-
-#         # Declare a queue (create it if it doesn't exist)
-#         channel.queue_declare(queue=queue_name, durable=True)
-
-#         # Publish image path to the queue
-#         channel.basic_publish(
-#             exchange='',
-#             routing_key=queue_name,
-#             body=image_path,
-#             properties=pika.BasicProperties(
-#                 delivery_mode=2,  # Make message persistent
-#             )
-#         )
-
-#         print(f" [x] Sent '{image_path}' to queue '{queue_name}'")
-
-#     except Exception as e:
-#         print(f"An error occurred while pushing to RabbitMQ: {e}")
-
-#     finally:
-#         # Close the connection
-#         if 'connection' in locals() and connection.is_open:
-#             connection.close()
-
-
-# # Title of the Streamlit app
-# st.title("Image Upload Example")
-
-# # Create an image uploader widget
-# uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
-# output = {}
-
-# image_path = read_and_save_input_image(uploaded_file)
-
-# output.update({
-#     "image_path": str(image_path)
-# })
-# push_to_rabbitmq(output)
-
 import streamlit as st
 import pika
+from datetime import datetime
 import json
 from read_and_save import read_and_save_input_image
+from detect import detect
+from push_to_db import insert_db
+from process_output import post_process
 
 # Function to push image path to RabbitMQ
 def push_to_rabbitmq(data):
@@ -102,13 +54,19 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg
 if uploaded_file is not None:
     # Read and save the input image
     image_path = read_and_save_input_image(uploaded_file)
-
-    # Prepare output dictionary
-    output = {
-        "image_path": str(image_path)
-    }
-
+    final = []
+    detections = detect(image_path)
+    count_class = post_process(detections)
+    for item in count_class:
+        cls_dict = {
+            "image_path": image_path,
+            "class_name": item[0],
+            "count": item[1],
+            "time": datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        }
+        final.append(cls_dict)
     
+    ids = insert_db(final)
 
     # # Push the image path to RabbitMQ
     # push_to_rabbitmq(output)
