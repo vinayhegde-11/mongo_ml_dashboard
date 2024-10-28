@@ -1,0 +1,6 @@
+image_dir: "path to image dir"
+model_path: "model path (.pt)"
+rabbitmq_url: "rabbitmq url"
+s3_bucket_name: "bucket name"
+aws_access_key_id: "access key"
+aws_secret_access_key: "secret key"
