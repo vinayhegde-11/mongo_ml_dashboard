@@ -28,7 +28,7 @@ def read_and_save_input_image(uploaded_file):
             cv2.imwrite(image_path,image)
                 
             # Display the image
-            st.image(image, caption="Uploaded Image.", use_column_width=True)
+            st.image(cv2.cvtColor(image,cv2.COLOR_BGR2RGB), caption="Uploaded Image.", use_column_width=True)
 
             # Optionally, you can add any further processing or saving of the image
             st.write("Image uploaded successfully!")
