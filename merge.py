@@ -1,11 +1,13 @@
 import streamlit as st
 import pika
+from bson import ObjectId
 import json
 from datetime import datetime
 from pymongo import MongoClient
 from PIL import Image
 from push_to_db import insert_db
 from read_and_save import read_and_save_input_image
+from s3_upload import upload_to_s3
 from detect import detect
 from process_output import post_process
 import io
@@ -39,7 +41,7 @@ def get_distinct_dates():
     formatted_dates = sorted({date.split(" ")[0] for date in raw_dates})
     return ["All"] + formatted_dates
 def portal_page():
-    st.title("Data Dashboard")
+    st.title("Dashboard")
 
     # Create a container for the filters at the top
     filter_col1, filter_col2 = st.columns([3, 1])  # Wider column for class filter, narrower for date filter
@@ -134,14 +136,27 @@ def push_to_rabbitmq(data):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, virtual_host=vhost, credentials=credentials))
         channel = connection.channel()
         channel.queue_declare(queue=queue_name, durable=True)
-        message_str = json.dumps(data)
-        channel.basic_publish(exchange='', routing_key=queue_name, body=message_str, properties=pika.BasicProperties(delivery_mode=2))
-        print(f" [x] Sent '{message_str}' to queue '{queue_name}'")
+        if 'id' in data:
+            for object_id in data['id']:
+                # Convert to JSON
+                message = json.dumps({'id': object_id})
+                channel.basic_publish(exchange='', routing_key=queue_name, body=message, properties=pika.BasicProperties(delivery_mode=2))
+                print(f" [x] Sent '{message}' to queue '{queue_name}'")
     except Exception as e:
         print(f"An error occurred while pushing to RabbitMQ: {e}")
     finally:
         if 'connection' in locals() and connection.is_open:
             connection.close()
+
+def serialize_data(data):
+    if isinstance(data, dict):
+        return {k: serialize_data(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [serialize_data(item) for item in data]
+    elif isinstance(data, ObjectId):
+        return str(data)  # Convert ObjectId to string
+    else:
+        return data
 
 # Function for the image upload page
 def upload_page():
@@ -163,7 +178,10 @@ def upload_page():
             final.append(cls_dict)
         
         ids = insert_db(final)
-        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+        print(ids)
+        push_to_rabbitmq(serialize_data({"id": ids}))
+
+        # st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
 
 # Main function to manage the app
 # def main():
