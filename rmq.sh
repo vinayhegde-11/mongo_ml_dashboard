@@ -1,3 +1,5 @@
+# Generated with the help of chatgpt
+
 #!/bin/bash
 
 # Update system packages
