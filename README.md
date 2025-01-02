@@ -102,12 +102,6 @@ This project integrates object detection, data storage, cloud syncing, and an in
 - MongoDB must be installed and running for the application to work.
 - AWS credentials should have appropriate permissions for the S3 bucket.
 
-## Future Improvements
-
-- Add support for real-time object detection on video streams.
-- Expand dashboard capabilities with detailed analytics and visualization.
-- Implement error handling for RabbitMQ and S3 upload processes.
-
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
