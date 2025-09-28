@@ -1,8 +1,10 @@
 from pymongo import MongoClient
 from bson import ObjectId
+from config_loader import load_config
 
+config = load_config('config.yml')
 # MongoDB connection (replace with your MongoDB connection URI)
-client = MongoClient("mongodb://localhost:27017/")  # Replace with your URI
+client = MongoClient(config['mongodb_url'])  # Replace with your URI
 db = client["mydatabase"]  # Replace with your database name
 collection = db["mycollection"]  # Replace with your collection name
 

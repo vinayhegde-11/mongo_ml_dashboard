@@ -1,9 +1,11 @@
 from pymongo import MongoClient
+from config_loader import load_config
 
+config = load_config('config.yml')
 
 def delete_db():
     # MongoDB connection (replace with your MongoDB connection URI)
-    client = MongoClient("mongodb://localhost:27017/")  # Replace with your URI
+    client = MongoClient(config['mongodb_url'])  # Replace with your URI
     # Specify the name of the database you want to delete
     database_name = "mydatabase"  # Replace with your database name
     # Delete the database

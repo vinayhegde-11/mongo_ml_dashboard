@@ -49,19 +49,31 @@ This project integrates object detection, data storage, cloud syncing, and an in
    - Download `yolov7.pt` from [this link](https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7.pt).
    - Place the file in the project directory.
 
-5. Configure RabbitMQ:
+5. (New) Start MongoDB using Docker:
    ```bash
-   bash rmq.sh
+   docker pull mongo:latest
+   docker run -d --name mongo_ml_dashboard_db -p 27017:27017 mongo:latest
+   ```
+   This will start MongoDB in a container and expose it on port 27017. The app will connect using `mongodb://localhost:27017/`.
+
+6. Configure RabbitMQ:
+   ```bash
+   bash rmq.sh <username> <password>
    ```
 
-6. Update the `config.yml` file with the following details:
+7. Update the `config.yml` file with the following details:
    ```yaml
-   AWS_PUBLIC_KEY: "<your-aws-public-key>"
-   AWS_SECRET_KEY: "<your-aws-secret-key>"
-   RABBITMQ_URL: "<rabbitmq-url>"
-   IMAGE_STORE_FOLDER: "<path-to-local-image-storage-folder>"
-   S3_BUCKET_NAME: "<your-s3-bucket-name>"
-   MODEL_FILE: "yolov7.pt"
+   aws_access_key_id: "<your-aws-access-key-id>"
+   aws_secret_access_key: "<your-aws-secret-access-key>"
+   s3_bucket_name: "<your-s3-bucket-name>"
+   mongodb_url: "mongodb://localhost:27017/"
+   rmq_user: "<rabbitmq-username>"
+   rmq_pass: "<rabbitmq-password>"
+   rmq_host: "localhost"
+   rmq_vhost: "entries"
+   rmq_topic: "<TOPIC_NAME>"
+   image_dir: "<IMAGE_SAVE_PATH>"
+   model_path: "yolov7.pt"
    ```
 
 ## Usage
@@ -99,8 +111,15 @@ This project integrates object detection, data storage, cloud syncing, and an in
 ## Notes
 
 - Ensure all required configurations in `config.yml` are correctly set before running the application.
-- MongoDB must be installed and running for the application to work.
+- MongoDB must be running (now recommended via Docker container).
 - AWS credentials should have appropriate permissions for the S3 bucket.
+
+## What's New
+
+- **MongoDB now runs in a Docker container**: No need for local installation. The app connects to the container via `localhost:27017`.
+- **Configuration improvements**: All connection URIs and credentials are now loaded from `config.yml`.
+- **Code refactoring**: MongoDB, RabbitMQ, and S3 integrations are modular and configurable.
+- **Bug fixes and stability**: Improved error handling and reliability for cloud sync and dashboard features.
 
 ## License
 

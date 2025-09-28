@@ -7,16 +7,19 @@ from pymongo import MongoClient
 from PIL import Image
 from push_to_db import insert_db
 from read_and_save import read_and_save_input_image
+from read_rabbitmq import read_from_rabbitmq
 from s3_upload import upload_to_s3
 from detect import detect
 from process_output import post_process
+from config_loader import load_config
 import io
 import base64
 import time
 import os
 
+config = load_config('config.yml')
 # MongoDB connection (replace with your MongoDB connection URI)
-client = MongoClient("mongodb://localhost:27017/")  # Replace with your URI
+client = MongoClient(config['mongodb_url'])  # Replace with your URI
 db = client["mydatabase"]  # Replace with your database name
 collection = db["mycollection"]  # Replace with your collection name
 
@@ -129,19 +132,22 @@ def portal_page():
 # Function to push image path to RabbitMQ
 def push_to_rabbitmq(data):
     try:
-        rabbitmq_host = 'localhost'
-        queue_name = 'image_path'
-        vhost = "entries"
-        credentials = pika.PlainCredentials('vinay', 'vinay')
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host, virtual_host=vhost, credentials=credentials))
+        rmq_user = config["rmq_user"]
+        rmq_pass = config["rmq_pass"]
+        rmq_topic = config["rmq_topic"]
+        rmq_host = config["rmq_host"]
+        rmq_vhost = config["rmq_vhost"]
+
+        credentials = pika.PlainCredentials(rmq_user, rmq_pass)
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=rmq_host, virtual_host=rmq_vhost, credentials=credentials))
         channel = connection.channel()
-        channel.queue_declare(queue=queue_name, durable=True)
+        channel.queue_declare(queue=rmq_topic, durable=True)
         if 'id' in data:
             for object_id in data['id']:
                 # Convert to JSON
                 message = json.dumps({'id': object_id})
-                channel.basic_publish(exchange='', routing_key=queue_name, body=message, properties=pika.BasicProperties(delivery_mode=2))
-                print(f" [x] Sent '{message}' to queue '{queue_name}'")
+                channel.basic_publish(exchange='', routing_key=rmq_topic, body=message, properties=pika.BasicProperties(delivery_mode=2))
+                print(f" [x] Sent '{message}' to queue '{rmq_topic}'")
     except Exception as e:
         print(f"An error occurred while pushing to RabbitMQ: {e}")
     finally:
@@ -180,6 +186,7 @@ def upload_page():
         ids = insert_db(final)
         print(ids)
         push_to_rabbitmq(serialize_data({"id": ids}))
+        read_from_rabbitmq()
 
         # st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
 
@@ -212,6 +219,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

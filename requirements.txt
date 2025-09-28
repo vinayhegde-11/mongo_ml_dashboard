@@ -10,3 +10,5 @@ torchvision>=0.8.1,!=0.13.0
 matplotlib
 seaborn
 boto3
+tqdm
+scipy

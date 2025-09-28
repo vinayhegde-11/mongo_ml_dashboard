@@ -4,6 +4,8 @@ from models.experimental import attempt_load
 from utils.datasets import  LoadImages
 from utils.general import check_img_size, non_max_suppression,scale_coords
 from config_loader import load_config
+import time
+
 config = load_config('config.yml')
 
 _model_instance = None
@@ -54,7 +56,7 @@ def detect(image,model_path=None,imgsz=640):
 
 
 if __name__ == '__main__':
-    model = attempt_load("/home/hegde/project/pipeline_y7/yolov7.pt", map_location='cpu')  # load FP32 model
-    img_path = "horses.jpg"
-    result = detect(img_path,model,640)
+    img_path = "elephant.jpeg"
+    result = detect(img_path,"yolov7.pt",640)
     print(result)
+
