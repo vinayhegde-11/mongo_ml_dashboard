@@ -51,8 +51,8 @@ This project integrates object detection, data storage, cloud syncing, and an in
 
 5. (New) Start MongoDB using Docker:
    ```bash
-   docker pull mongo:latest
-   docker run -d --name mongo_ml_dashboard_db -p 27017:27017 mongo:latest
+   docker pull mongodb/mongodb-community-server:latest
+   docker run --name mongodb -p 27017:27017 -d mongodb/mongodb-community-server:latest
    ```
    This will start MongoDB in a container and expose it on port 27017. The app will connect using `mongodb://localhost:27017/`.
 
